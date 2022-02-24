@@ -37,16 +37,45 @@ while True:
         mes = json.loads(data.decode("utf-8"))['text']
         print(mes)
         if mes.split()[0].lower() == 'найти':
-            string = ''.join(re.split('|найти|Найти|…|«|»|!|-|:|—|\?| |\.|;|,|\*|\n', mes)).lower()
+            string = ''.join(re.split('|Включи|включи|найди|Найди|…|«|»|!|-|:|—|\?| |\.|;|,|\*|\n', mes)).lower()
             sql_request = 'SELECT * FROM tra WHERE text LIKE "%{}%"'.format(string)
+            print(sql_request)
             cursor.execute(sql_request)
-            print(*cursor.fetchall())
-            cursor.close()
-            con.close()
+            rows = cursor.fetchall()
+            #cursor.close()
+            #con.close()
             req = {'title': [], 'url': []}
             for song in rows:
                 req['title'].append(song[1])
                 req['url'].append(song[2])
+            print(req)
+            req = json.dumps(req)
+            conn.sendall(bytes(req, encoding="utf-8"))
+        else:
+            string = ''.join(re.split('|Включи|включи|найти|Найти|…|«|»|!|-|:|—|\?| |\.|;|,|\*|\n', mes)).lower()
+            sql_request = 'SELECT * FROM tra WHERE text LIKE "%{}%"'.format(string)
+            print(sql_request)
+            cursor.execute(sql_request)
+            rows = cursor.fetchall()
+            #cursor.close()
+            #con.close()
+            req = {"directives": {
+            "audio_player": {
+                "action": "Play",
+                "item": {
+                    "stream": {
+                        "url": "",
+                        "offset_ms": 0,
+                        "token": ""
+                    },
+                    "metadata": {
+                        "title": ""
+                        }
+                    }
+                }
+            }}
+            req["directives"]["audio_player"]["item"]["stream"]["url"] = rows[0][2]
+            req["directives"]["audio_player"]["item"]["metadata"]["title"] = rows[0][1]
             print(req)
             req = json.dumps(req)
             conn.sendall(bytes(req, encoding="utf-8"))
